@@ -11,4 +11,9 @@
     <PackageReference Include="Ocelot" Version="24.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="ocelot.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="ocelot.*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
