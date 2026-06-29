@@ -25,3 +25,7 @@ _ReSharper*/
 
 ## Docker volumes / data
 data/
+
+## Local-only docs (kept on disk, not pushed)
+microservices-notification-prompt.md
+learn/
