@@ -1,0 +1,75 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # management UI at http://localhost:15672 (guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  userservice:
+    build:
+      # Root context so the shared/ project is reachable during the build.
+      context: .
+      dockerfile: services/UserService/UserService.API/Dockerfile
+    container_name: userservice
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Data Source=/data/userservice.db
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - JwtSettings__SecretKey=your-super-secret-key-min-32-chars-long-please-change
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - userservice-data:/data
+
+  notificationservice:
+    build:
+      context: .
+      dockerfile: services/NotificationService/NotificationService.API/Dockerfile
+    container_name: notificationservice
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Data Source=/data/notificationservice.db
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - notificationservice-data:/data
+
+  apigateway:
+    build:
+      context: .
+      dockerfile: services/ApiGateway/ApiGateway.API/Dockerfile
+    container_name: apigateway
+    ports:
+      - "5000:8080"
+    environment:
+      # 'Docker' (not Development) so Ocelot uses ocelot.json (service-name routes),
+      # not the ocelot.Development.json localhost override used for local runs.
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - JwtSettings__SecretKey=your-super-secret-key-min-32-chars-long-please-change
+    depends_on:
+      - userservice
+      - notificationservice
+
+volumes:
+  userservice-data:
+  notificationservice-data:

@@ -1,0 +1,15 @@
+# Local development overrides — applied automatically by `docker compose up`.
+# Surfaces verbose logging so the [EMAIL STUB] output is easy to spot in the
+# NotificationService logs when verifying the end-to-end flow.
+services:
+  userservice:
+    environment:
+      - Logging__LogLevel__Default=Information
+
+  notificationservice:
+    environment:
+      - Logging__LogLevel__Default=Information
+
+  apigateway:
+    environment:
+      - Logging__LogLevel__Default=Information
