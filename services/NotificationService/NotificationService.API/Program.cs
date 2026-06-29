@@ -1,39 +1,53 @@
+using MassTransit;
+using NotificationService.API.Middleware;
+using NotificationService.Application;
+using NotificationService.Application.Consumers;
+using NotificationService.Infrastructure;
+using NotificationService.Infrastructure.Persistence;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ---- Application & Infrastructure ----
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// ---- Controllers & Swagger ----
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// ---- MassTransit + RabbitMQ (consumers) ----
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<UserRegisteredConsumer>();
+    x.AddConsumer<PasswordResetRequestedConsumer>();
+    x.AddConsumer<UserProfileUpdatedConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        });
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "NotificationService" }));
+
+// Apply migrations and seed default templates on startup.
+await DbSeeder.MigrateAndSeedAsync(app.Services);
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program { }
