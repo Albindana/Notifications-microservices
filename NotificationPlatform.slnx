@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/services/" />
+  <Folder Name="/services/ApiGateway/">
+    <Project Path="services/ApiGateway/ApiGateway.API/ApiGateway.API.csproj" />
+  </Folder>
+  <Folder Name="/services/NotificationService/">
+    <Project Path="services/NotificationService/NotificationService.API/NotificationService.API.csproj" />
+    <Project Path="services/NotificationService/NotificationService.Application/NotificationService.Application.csproj" />
+    <Project Path="services/NotificationService/NotificationService.Domain/NotificationService.Domain.csproj" />
+    <Project Path="services/NotificationService/NotificationService.Infrastructure/NotificationService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/services/UserService/">
+    <Project Path="services/UserService/UserService.API/UserService.API.csproj" />
+    <Project Path="services/UserService/UserService.Application/UserService.Application.csproj" />
+    <Project Path="services/UserService/UserService.Domain/UserService.Domain.csproj" />
+    <Project Path="services/UserService/UserService.Infrastructure/UserService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="shared/Shared.Contracts/Shared.Contracts.csproj" />
+  </Folder>
+</Solution>
