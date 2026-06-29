@@ -18,4 +18,8 @@
   <Folder Name="/shared/">
     <Project Path="shared/Shared.Contracts/Shared.Contracts.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NotificationService.Tests/NotificationService.Tests.csproj" />
+    <Project Path="tests/UserService.Tests/UserService.Tests.csproj" />
+  </Folder>
 </Solution>
