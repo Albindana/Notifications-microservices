@@ -60,7 +60,8 @@ services:
       dockerfile: services/ApiGateway/ApiGateway.API/Dockerfile
     container_name: apigateway
     ports:
-      - "5000:8080"
+      # Host 5080 → container 8080 (macOS reserves host port 5000 for AirPlay Receiver).
+      - "5080:8080"
     environment:
       # 'Docker' (not Development) so Ocelot uses ocelot.json (service-name routes),
       # not the ocelot.Development.json localhost override used for local runs.

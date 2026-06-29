@@ -14,7 +14,7 @@ synchronously through an API Gateway (Ocelot) and asynchronously over RabbitMQ (
 
 ```
 ┌─────────────┐     HTTP      ┌──────────────┐
-│   Client    │──────────────▶│  API Gateway │  (Ocelot, :5000)
+│   Client    │──────────────▶│  API Gateway │  (Ocelot, :5080)
 └─────────────┘               │   (Ocelot)   │
                               └──────┬───────┘
                                      │ HTTP routing
@@ -127,7 +127,7 @@ GET  /api/templates                  list templates (admin)
 PUT  /api/templates/{id}             update template subject/body (admin)
 ```
 
-All routes are reachable through the gateway at `http://localhost:5000` using the same paths.
+All routes are reachable through the gateway at `http://localhost:5080` using the same paths.
 `/api/users`, `/api/notifications` and `/api/templates` are protected by JWT validation at the gateway.
 
 ---
@@ -142,7 +142,7 @@ Then:
 
 | What                       | URL                                |
 |----------------------------|------------------------------------|
-| API Gateway                | http://localhost:5000              |
+| API Gateway                | http://localhost:5080              |
 | UserService (direct)       | http://localhost:5001/swagger      |
 | NotificationService (direct)| http://localhost:5002/swagger     |
 | RabbitMQ management UI      | http://localhost:15672 (guest/guest)|
@@ -151,7 +151,7 @@ Then:
 
 ```bash
 # 1) Register a user through the gateway
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"jane@test.com","password":"Passw0rd","firstName":"Jane","lastName":"Doe"}'
 
@@ -159,8 +159,11 @@ curl -X POST http://localhost:5000/api/auth/register \
 docker compose logs -f notificationservice
 # → look for:  [EMAIL STUB] To: jane@test.com | Subject: Welcome to Notification Platform, Jane! | ...
 
-# 3) Confirm the notification was logged
-curl http://localhost:5000/api/notifications/user/<userId>
+# 3) Confirm the notification was logged (this route is JWT-protected at the gateway)
+TOKEN=$(curl -s -X POST http://localhost:5080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jane@test.com","password":"Passw0rd"}' | jq -r .accessToken)
+curl http://localhost:5080/api/notifications/user/<userId> -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Seed accounts (UserService, created on startup)
