@@ -142,6 +142,7 @@ Then:
 
 | What                       | URL                                |
 |----------------------------|------------------------------------|
+| Frontend dashboard         | http://localhost:3000              |
 | API Gateway                | http://localhost:5080              |
 | UserService (direct)       | http://localhost:5001/swagger      |
 | NotificationService (direct)| http://localhost:5002/swagger     |
@@ -171,6 +172,60 @@ curl http://localhost:5080/api/notifications/user/<userId> -H "Authorization: Be
 - `user@notify.com` / `User123!`
 
 NotificationService seeds 3 templates on startup: Welcome, PasswordReset, ProfileUpdate.
+
+---
+
+## Frontend dashboard
+
+A React + Vite + TypeScript single-page app lives in [`frontend/`](frontend/). It is the easiest way to
+demo the platform end-to-end — sign in, browse notifications, edit templates, and watch the
+event-driven flow live.
+
+In Docker it is served by **nginx**, which also reverse-proxies `/api/*` to the gateway, so the browser
+always calls same-origin `/api/...` — **no CORS configuration is needed on the backend**.
+
+```
+Browser → nginx (frontend:80) ─┬─ static React build
+                               └─ /api/* ─reverse-proxy─→ apigateway:8080
+```
+
+### Run it
+
+```bash
+docker compose up --build      # then open http://localhost:3000
+```
+
+Sign in with a seed account (`admin@notify.com` / `Admin123!`).
+
+### What's in it
+
+| Page          | What it does                                                                 |
+|---------------|------------------------------------------------------------------------------|
+| **Live Demo** | Trigger an action and watch the resulting notification arrive (polls every 2s). |
+| **Notifications** | List/filter by status (Sent/Pending/Failed), view details, retry failed ones. |
+| **Templates** | View and edit notification templates with `{{placeholder}}` hints.            |
+| **Profile**   | Edit your profile — publishes a `UserProfileUpdatedEvent` → ProfileUpdate notification. |
+| **Auth**      | Login, register, forgot/reset password, JWT storage with automatic refresh.  |
+
+### Demo script (great for interviews)
+
+1. Open http://localhost:3000 → **Register** a new user. A **Welcome** notification appears under
+   Notifications (proves `UserRegisteredEvent` → RabbitMQ → NotificationService).
+2. Go to **Live Demo**, click *Update my profile* → within ~2s a **ProfileUpdate** notification lands
+   in the live feed.
+3. Open **Templates**, tweak the Welcome subject, save, register another user → the new welcome
+   reflects your edit.
+
+### Local development (without Docker)
+
+The Vite dev server proxies `/api` to the gateway at `http://localhost:5080`, so run the backend first
+(see below), then:
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:3000
+```
 
 ---
 

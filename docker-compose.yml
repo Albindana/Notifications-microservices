@@ -71,6 +71,17 @@ services:
       - userservice
       - notificationservice
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      # Browse the dashboard at http://localhost:3000
+      - "3000:80"
+    depends_on:
+      - apigateway
+
 volumes:
   userservice-data:
   notificationservice-data:
